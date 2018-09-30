@@ -18,10 +18,12 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
+uint8_t leftSpeed = 0;
+uint8_t rightSpeed = 0;
 const int IR_SENSOR = A0;
-const int MAX_REFLECT = 930;
-const int MIN_REFLECT = 630;
-const int MAX_SPEED = 50;
+const int MAX_REFLECT = 990;
+const int MIN_REFLECT = 800;
+const uint8_t MAX_SPEED = 70;
 bool running = true;
 const int BUTTON = 8;
 
@@ -46,15 +48,24 @@ void loop() {
   if (running) {
     motorLeft->run(FORWARD);
     motorRight->run(BACKWARD);
-    int leftSpeed = round(map(analogRead(IR_SENSOR), MIN_REFLECT, MAX_REFLECT, 0, MAX_SPEED));
-    int rightSpeed = MAX_SPEED - leftSpeed;
-    motorLeft->setSpeed(leftSpeed);
-    motorRight->setSpeed(rightSpeed);
+//    motorRight->setSpeed(50.0);
+//    motorLeft -> setSpeed(50.0);
+    leftSpeed = round(map(analogRead(IR_SENSOR), MIN_REFLECT, MAX_REFLECT, 0, MAX_SPEED)) & 0x00FF;
+    delay(10);
+    rightSpeed = (MAX_SPEED - leftSpeed) & 0x00FF;
+    Serial.print("Sensor: ");
+    Serial.println(analogRead(IR_SENSOR));
     Serial.print("LEFT SPEED: ");
     Serial.println(leftSpeed);
     Serial.print("RIGHT SPEED: ");
     Serial.println(rightSpeed);
-    delay(100);
+    delay(500);
+    motorLeft-> setSpeed(leftSpeed);
+    motorRight-> setSpeed(rightSpeed);
+
+//    delay(10);
+//    motorLeft->run(RELEASE);
+//    motorRight->run(RELEASE);
   }
   
 //  
