@@ -9,6 +9,7 @@ For use with the Adafruit Motor Shield v2
 
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
+#include <String.h>
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
@@ -24,7 +25,7 @@ const int IR_SENSOR = A0;
 const int MAX_REFLECT = 990;
 const int MIN_REFLECT = 800;
 const uint8_t MAX_SPEED = 70;
-bool running = true;
+bool running = false;
 const int BUTTON = 8;
 
 // You can also make another motor on port M2
@@ -39,6 +40,27 @@ void setup() {
 }
 
 void loop() {
+  if (Serial.available() > 0){
+    String new_char = Serial.readString();
+    int input_command = new_char.substring(1).toInt();
+    switch(new_char[0]){
+      case '*':
+        // Max speed = input_commandand;
+        Serial.print("* Message: ");
+        Serial.println(input_command);
+        break;
+      case '+':
+        // P const = input_command;
+        Serial.print("+ Message: ");
+        Serial.println(input_command);
+        break;
+      case ',':
+        // D const = input_command;
+        Serial.print(", Message: ");
+        Serial.println(input_command);
+        break;
+    }
+  }
   uint8_t i;
 
   if (digitalRead(BUTTON)){
@@ -48,11 +70,11 @@ void loop() {
   if (running) {
     motorLeft->run(FORWARD);
     motorRight->run(BACKWARD);
-//    motorRight->setSpeed(50.0);
-//    motorLeft -> setSpeed(50.0);
     leftSpeed = round(map(analogRead(IR_SENSOR), MIN_REFLECT, MAX_REFLECT, 0, MAX_SPEED)) & 0x00FF;
     delay(10);
     rightSpeed = (MAX_SPEED - leftSpeed) & 0x00FF;
+    leftSpeed = limitSpeed(leftSpeed, 0, MAX_SPEED);
+    rightSpeed = limitSpeed(rightSpeed, 0, MAX_SPEED);
     Serial.print("Sensor: ");
     Serial.println(analogRead(IR_SENSOR));
     Serial.print("LEFT SPEED: ");
@@ -62,44 +84,15 @@ void loop() {
     delay(500);
     motorLeft-> setSpeed(leftSpeed);
     motorRight-> setSpeed(rightSpeed);
-
-//    delay(10);
-//    motorLeft->run(RELEASE);
-//    motorRight->run(RELEASE);
   }
-  
-//  
-//  
-//  
-//  for (i=0; i<255; i++) {
-//    myMotor->setSpeed(i);
-//    myMotor2->setSpeed(i);  
-//    delay(10);
-//  }
-//  for (i=255; i!=0; i--) {
-//    myMotor->setSpeed(i); 
-//    myMotor2->setSpeed(i);   
-//    delay(10);
-//  }
-//  
-//  Serial.print("tock");
-//
-//  
-//  myMotor->run(BACKWARD);
-//  myMotor2->run(BACKWARD);
-//  for (i=0; i<255; i++) {
-//    myMotor->setSpeed(i);  
-//    myMotor2->setSpeed(i);  
-//    delay(10);
-//  }
-//  for (i=255; i!=0; i--) {
-//    myMotor->setSpeed(i);  
-//    myMotor2->setSpeed(i);  
-//    delay(10);
-//  }
-//
-//  Serial.print("tech");
-//  myMotor->run(RELEASE);
-//  myMotor2->run(RELEASE);  
-//  delay(1000);
+}
+
+int limitSpeed(int initialSpeed, int maxSpeed, int minSpeed) {
+  if (initialSpeed > maxSpeed){
+    return maxSpeed;
+  }
+  if (initialSpeed < minSpeed) {
+    return minSpeed;
+  }
+  return initialSpeed;
 }
