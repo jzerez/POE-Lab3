@@ -19,13 +19,15 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
-uint8_t leftSpeed = 0;
-uint8_t rightSpeed = 0;
-const int IR_SENSOR = A0;
-const int MAX_REFLECT = 990;
+uint8_t leftSpeed = 30;
+uint8_t rightSpeed = 30;
+const int IR_SENSOR1 = A0; //sensor to left of tape
+const int IR_SENSOR2 = A1; //sensor to right of tape
+const int MAX_REFLECT = 990; //will need to double check these values
 const int MIN_REFLECT = 800;
-const uint8_t MAX_SPEED = 70;
-bool running = false;
+uint8_t maxSpeed = 50;
+uint8_t Kp = 0.1;
+bool running = true;
 const int BUTTON = 8;
 
 // You can also make another motor on port M2
@@ -45,12 +47,14 @@ void loop() {
     int input_command = new_char.substring(1).toInt();
     switch(new_char[0]){
       case '*':
-        // Max speed = input_commandand;
+        //Updating maxSpeed
+        maxSpeed = input_command;
         Serial.print("* Message: ");
         Serial.println(input_command);
         break;
       case '+':
-        // P const = input_command;
+        //Updating Kp 
+        Kp = input_command;
         Serial.print("+ Message: ");
         Serial.println(input_command);
         break;
@@ -70,18 +74,30 @@ void loop() {
   if (running) {
     motorLeft->run(FORWARD);
     motorRight->run(BACKWARD);
-    leftSpeed = round(map(analogRead(IR_SENSOR), MIN_REFLECT, MAX_REFLECT, 0, MAX_SPEED)) & 0x00FF;
+    int sensor1 = analogRead(IR_SENSOR1);
+    int sensor2 = analogRead(IR_SENSOR2);
+    int diff = sensor1 - sensor2;
+    uint8_t deltaSpeed = (diff * Kp) & 0x00FF;;
+    //if diff > 0 (sensor1 > sensor2), then the left sensor is touching the black tape, so the car should turn left.
+    //if diff < 0 (sensor1 < sensor2), then the right sensor is touching the black tape, so the car should turn right.
+    //new speed of left wheel should always be subtracted by deltaSpeed
+    leftSpeed = leftSpeed - deltaSpeed;
+    //new speed of right wheel should always by added with deltaSpeed
+    rightSpeed = rightSpeed + deltaSpeed;
+//    leftSpeed = round(map(analogRead(IR_SENSOR), MIN_REFLECT, MAX_REFLECT, 0, maxSpeed)) & 0x00FF;
     delay(10);
-    rightSpeed = (MAX_SPEED - leftSpeed) & 0x00FF;
-    leftSpeed = limitSpeed(leftSpeed, 0, MAX_SPEED);
-    rightSpeed = limitSpeed(rightSpeed, 0, MAX_SPEED);
-    Serial.print("Sensor: ");
-    Serial.println(analogRead(IR_SENSOR));
+//    rightSpeed = (maxSpeed - leftSpeed) & 0x00FF;
+    leftSpeed = limitSpeed(leftSpeed, maxSpeed, 0);
+    rightSpeed = limitSpeed(rightSpeed, maxSpeed, 0);
+    Serial.print("Diff sensor value and deltaspeed: ");
+    Serial.print(diff);
+    Serial.print(", ");
+    Serial.println(deltaSpeed);
     Serial.print("LEFT SPEED: ");
     Serial.println(leftSpeed);
     Serial.print("RIGHT SPEED: ");
     Serial.println(rightSpeed);
-    delay(500);
+    delay(100);
     motorLeft-> setSpeed(leftSpeed);
     motorRight-> setSpeed(rightSpeed);
   }
