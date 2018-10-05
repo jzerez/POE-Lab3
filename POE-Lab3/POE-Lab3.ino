@@ -104,11 +104,66 @@ void loop() {
 }
 
 int limitSpeed(int initialSpeed, int maxSpeed, int minSpeed) {
+  /*
+   * This function is designed to artificially limit any inputs to the motor. If the input speed is
+   * not within the specified range, the function automatically clips it such that it fits in the 
+   * range. It takes the following arguments:
+   *    initialSpeed:   Raw speed
+   *    maxSpeed:       Upper bound for acceptable speeds
+   *    minSpeed:       Lower bound for acceptable speeds
+   */
+
+  // Clip value if greater than maximum 
   if (initialSpeed > maxSpeed){
     return maxSpeed;
   }
+  // Clip value if less than minimum
   if (initialSpeed < minSpeed) {
     return minSpeed;
   }
+  // Return the original value if it within the range
   return initialSpeed;
+}
+
+int calibrate(int scanSpeed, int sensor, int steps, bool findAverage, bool debugMode) {
+  /* 
+   *  This function is designed to scan the line at the beginning of the course to generate its own
+   *  threshold values for the IR sensor. It takes the following arguments:
+   *    scanSpeed:    Speed (0-255) of the motor during the scan
+   *    sensor:       Pin number of the sensor to be used in the scan
+   *    steps:        Number of points used to calculate reflectance of the ground
+   *    findAverage:  Toggle to switch between finding the average reflectance of the ground. If
+   *                  true, the function will return the average reflectance. If false, the fuction
+   *                  will return the minimum reflectance found over the scan interval
+   *    debugMode:    Toggle for print statements
+   */
+
+  // Initialize Variables
+  int lightValues = 0;
+    
+  // Move off the line
+  motorLeft->run(BACKWARD);
+  motorLeft->setSpeed(scanSpeed);
+  delay(500);
+
+  // Start the scan of the ground
+  for (int i = 0; i < steps; i++) {
+    motorLeft-> setSpeed(scanSpeed);
+    
+    if (findAverage) {
+      lightValues += (analogRead(sensor) / steps);
+    } else if (analogRead(sensor) > lightValues) {
+      lightValues = analogRead(sensor);
+    }
+    delay(20);
+  }
+  // Return to rough start position
+  motorLeft->run(FORWARD);
+  motorLeft->setSpeed(scanSpeed);
+  delay(500 + 20 * steps);
+  motorLeft->setSpeed(0);
+  
+  if (debugMode) {Serial.print("Measured Light Value is: "); Serial.println(lightValues);}
+
+  return lightValues;
 }
