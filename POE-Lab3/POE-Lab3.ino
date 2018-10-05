@@ -26,7 +26,7 @@ const int IR_SENSOR2 = A1; //sensor to right of tape
 const int MAX_REFLECT = 990; //will need to double check these values
 const int MIN_REFLECT = 800;
 uint8_t maxSpeed = 50;
-uint8_t Kp = 0.1;
+float Kp = 0.1;
 bool running = true;
 const int BUTTON = 8;
 
@@ -54,9 +54,9 @@ void loop() {
         break;
       case '+':
         //Updating Kp 
-        Kp = input_command;
+        Kp = input_command/10.0;
         Serial.print("+ Message: ");
-        Serial.println(input_command);
+        Serial.println(Kp);
         break;
       case ',':
         // D const = input_command;
@@ -76,19 +76,23 @@ void loop() {
     motorRight->run(BACKWARD);
     int sensor1 = analogRead(IR_SENSOR1);
     int sensor2 = analogRead(IR_SENSOR2);
-    int diff = sensor1 - sensor2;
-    uint8_t deltaSpeed = (diff * Kp) & 0x00FF;;
+    float diff = sensor1 - sensor2;
+    int deltaSpeed = round(diff * Kp);
     //if diff > 0 (sensor1 > sensor2), then the left sensor is touching the black tape, so the car should turn left.
     //if diff < 0 (sensor1 < sensor2), then the right sensor is touching the black tape, so the car should turn right.
     //new speed of left wheel should always be subtracted by deltaSpeed
-    leftSpeed = leftSpeed - deltaSpeed;
+    leftSpeed = (30 - deltaSpeed) & 0x00FF ;
     //new speed of right wheel should always by added with deltaSpeed
-    rightSpeed = rightSpeed + deltaSpeed;
+    rightSpeed = (30 + deltaSpeed) & 0x00FF;
 //    leftSpeed = round(map(analogRead(IR_SENSOR), MIN_REFLECT, MAX_REFLECT, 0, maxSpeed)) & 0x00FF;
     delay(10);
 //    rightSpeed = (maxSpeed - leftSpeed) & 0x00FF;
-    leftSpeed = limitSpeed(leftSpeed, maxSpeed, 0);
-    rightSpeed = limitSpeed(rightSpeed, maxSpeed, 0);
+    leftSpeed = limitSpeed(leftSpeed, maxSpeed, 0) & 0x00FF;
+    rightSpeed = limitSpeed(rightSpeed, maxSpeed, 0) & 0x00FF;
+    Serial.print("Sensor value 1: ");
+    Serial.println(sensor1);
+    Serial.print("Sensor value 2: ");
+    Serial.println(sensor2);
     Serial.print("Diff sensor value and deltaspeed: ");
     Serial.print(diff);
     Serial.print(", ");
@@ -97,7 +101,7 @@ void loop() {
     Serial.println(leftSpeed);
     Serial.print("RIGHT SPEED: ");
     Serial.println(rightSpeed);
-    delay(100);
+    delay(500);
     motorLeft-> setSpeed(leftSpeed);
     motorRight-> setSpeed(rightSpeed);
   }
