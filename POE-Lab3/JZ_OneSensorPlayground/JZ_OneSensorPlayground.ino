@@ -17,6 +17,7 @@ const int IR_SENSOR2 = A1; //sensor to right of tape
 const int MAX_REFLECT = 990; //will need to double check these values
 const int MIN_REFLECT = 800;
 uint8_t maxSpeed = 50;
+const int MIDDLE = 500;
 float Kp = 0.1;
 bool running = true;
 const int BUTTON = 8;
@@ -67,12 +68,12 @@ void loop() {
     motorRight->run(BACKWARD);
     int sensor1 = analogRead(IR_SENSOR1);
     int sensor2 = analogRead(IR_SENSOR2);
-    THRESH = 10;
-    if (sensor1 > 970 + THRESH) {
-      motorRight->setSpeed(20);s
+    int THRESH = 10;
+    if (sensor1 > MIDDLE + THRESH) {
+      motorRight->setSpeed(30);
       motorLeft->setSpeed(0);
-    } else if (sensor1 < 970 - THRESH) {
-      motorLeft->setSpeed(20)
+    } else if (sensor1 < MIDDLE - THRESH) {
+      motorLeft->setSpeed(30);
       motorRight->setSpeed(0);
     } else {
       motorLeft->setSpeed(15);
