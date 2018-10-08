@@ -1,14 +1,3 @@
-#include <TFT.h>
-
-/* 
-This is a test sketch for the Adafruit assembled Motor Shield for Arduino v2
-It won't work with v1.x motor shields! Only for the v2's with built in PWM
-control
-
-For use with the Adafruit Motor Shield v2 
----->	http://www.adafruit.com/products/1438
-*/
-
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 #include <String.h>
@@ -21,15 +10,14 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
-int leftSpeed = 30;
-int rightSpeed = 30;
+uint8_t leftSpeed = 30;
+uint8_t rightSpeed = 30;
 const int IR_SENSOR1 = A0; //sensor to left of tape
 const int IR_SENSOR2 = A1; //sensor to right of tape
 const int MAX_REFLECT = 990; //will need to double check these values
 const int MIN_REFLECT = 800;
-const int CALIBRATION = 8;
-uint8_t maxSpeed = 30;
-float Kp = 0.552;
+uint8_t maxSpeed = 50;
+float Kp = 0.1;
 bool running = true;
 const int BUTTON = 8;
 
@@ -77,36 +65,19 @@ void loop() {
   if (running) {
     motorLeft->run(FORWARD);
     motorRight->run(BACKWARD);
-    int sensor1 = analogRead(IR_SENSOR1) + CALIBRATION;
+    int sensor1 = analogRead(IR_SENSOR1);
     int sensor2 = analogRead(IR_SENSOR2);
-    float diff = sensor1 - sensor2;
-    int deltaSpeed = round(diff * Kp);
-    //if diff > 0 (sensor1 > sensor2), then the left sensor is touching the black tape, so the car should turn left.
-    //if diff < 0 (sensor1 < sensor2), then the right sensor is touching the black tape, so the car should turn right.
-    //new speed of left wheel should always be subtracted by deltaSpeed
-    leftSpeed = (30 - deltaSpeed);
-    //new speed of right wheel should always by added with deltaSpeed
-    rightSpeed = (30 + deltaSpeed);
-//    leftSpeed = round(map(analogRead(IR_SENSOR), MIN_REFLECT, MAX_REFLECT, 0, maxSpeed)) & 0x00FF;
-//    delay(500);
-//    rightSpeed = (maxSpeed - leftSpeed) & 0x00FF;
-    leftSpeed = limitSpeed(leftSpeed, maxSpeed, 0);
-    rightSpeed = limitSpeed(rightSpeed, maxSpeed, 0);
-    Serial.print("Sensor value 1: ");
-    Serial.println(sensor1);
-    Serial.print("Sensor value 2: ");
-    Serial.println(sensor2);
-    Serial.print("Diff sensor value and deltaspeed: ");
-    Serial.print(diff);
-    Serial.print(", ");
-    Serial.println(deltaSpeed);
-    Serial.print("LEFT SPEED: ");
-    Serial.println(leftSpeed);
-    Serial.print("RIGHT SPEED: ");
-    Serial.println(rightSpeed);
-    delay(10);
-    motorLeft-> setSpeed(leftSpeed & 0x00FF);
-    motorRight-> setSpeed(rightSpeed & 0x00FF);
+    THRESH = 10;
+    if (sensor1 > 970 + THRESH) {
+      motorRight->setSpeed(20);s
+      motorLeft->setSpeed(0);
+    } else if (sensor1 < 970 - THRESH) {
+      motorLeft->setSpeed(20)
+      motorRight->setSpeed(0);
+    } else {
+      motorLeft->setSpeed(15);
+      motorRight->setSpeed(15);
+    }
   }
 }
 

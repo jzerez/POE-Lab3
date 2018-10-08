@@ -12,12 +12,13 @@ uint8_t leftSpeed = 30;
 uint8_t rightSpeed = 30;
 const int IR_SENSOR1 = A0; //sensor to left of tape
 const int IR_SENSOR2 = A1; //sensor to right of tape
-bool measuring = false;
+bool measuring = true;
 float diff = 0.0;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
   AFMS.begin();  // create with the default frequency 1.6KHz
+  Serial.print("Starting");
 }
 
 void loop() {
@@ -27,7 +28,7 @@ void loop() {
     motorRight->run(BACKWARD);
 
     // Define constants that should probably just be global variables
-    const int steps = 50;
+    const int steps = 100;
     const int delayTime = 20;
     motorLeft->setSpeed(30);
     motorRight->setSpeed(30);
@@ -36,6 +37,10 @@ void loop() {
     for (int i = 0; i < steps; i++) {
       int sensor1 = analogRead(IR_SENSOR1);
       int sensor2 = analogRead(IR_SENSOR2);
+      Serial.print("sensor1 reading is: ");
+      Serial.println(sensor1);
+      Serial.print("sensor2 reading is: ");
+      Serial.println(sensor2);
       diff += sensor1 - sensor2;
       delay(delayTime);
     }
