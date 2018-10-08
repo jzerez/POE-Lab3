@@ -86,6 +86,9 @@ void loop() {
     else if(sensor2 > 970){
       //right wheel is on the tape 
     }
+    else{
+      
+    }
     float diff = sensor1 - sensor2;
     int deltaSpeed = round(diff * Kp);
     //if diff > 0 (sensor1 > sensor2), then the left sensor is touching the black tape, so the car should turn left.
