@@ -6,7 +6,7 @@ It won't work with v1.x motor shields! Only for the v2's with built in PWM
 control
 
 For use with the Adafruit Motor Shield v2 
----->	http://www.adafruit.com/products/1438
+---->  http://www.adafruit.com/products/1438
 */
 
 #include <Wire.h>
@@ -21,15 +21,16 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
+int leftSpeed = 30;
+int rightSpeed = 30;
 const int IR_SENSOR1 = A0; //sensor to left of tape
 const int IR_SENSOR2 = A1; //sensor to right of tape
 const int MAX_REFLECT = 990; //will need to double check these values
 const int MIN_REFLECT = 800;
-const int CALIBRATION = 60;
-uint8_t maxSpeed = 20;
-int leftSpeed = 20;
-int rightSpeed = 20;
-float Kp = 1;
+const int CALIBRATION = 0;
+const int IR_TAPE = 970;
+uint8_t maxSpeed = 30;
+float Kp = 0.8;
 bool running = true;
 const int BUTTON = 8;
 
@@ -79,14 +80,20 @@ void loop() {
     motorRight->run(BACKWARD);
     int sensor1 = analogRead(IR_SENSOR1) + CALIBRATION;
     int sensor2 = analogRead(IR_SENSOR2);
+    if(sensor1 > 970){
+      //left wheel is on the tape
+    }
+    else if(sensor2 > 970){
+      //right wheel is on the tape 
+    }
     float diff = sensor1 - sensor2;
     int deltaSpeed = round(diff * Kp);
     //if diff > 0 (sensor1 > sensor2), then the left sensor is touching the black tape, so the car should turn left.
     //if diff < 0 (sensor1 < sensor2), then the right sensor is touching the black tape, so the car should turn right.
     //new speed of left wheel should always be subtracted by deltaSpeed
-    leftSpeed = (20 - deltaSpeed);
+    leftSpeed = (30 - deltaSpeed);
     //new speed of right wheel should always by added with deltaSpeed
-    rightSpeed = (20 + deltaSpeed);
+    rightSpeed = (30 + deltaSpeed);
 //    leftSpeed = round(map(analogRead(IR_SENSOR), MIN_REFLECT, MAX_REFLECT, 0, maxSpeed)) & 0x00FF;
 //    delay(500);
 //    rightSpeed = (maxSpeed - leftSpeed) & 0x00FF;
@@ -104,7 +111,7 @@ void loop() {
     Serial.println(leftSpeed);
     Serial.print("RIGHT SPEED: ");
     Serial.println(rightSpeed);
-//    delay(10);
+    delay(500);
     motorLeft-> setSpeed(leftSpeed & 0x00FF);
     motorRight-> setSpeed(rightSpeed & 0x00FF);
   }
