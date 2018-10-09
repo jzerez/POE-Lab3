@@ -47,7 +47,7 @@ void setup() {
 void loop() {
   if (Serial.available() > 0){
     String new_char = Serial.readString();
-    int input_command = new_char.substring(1).toInt();
+    float input_command = new_char.substring(1).toFloat();
     switch(new_char[0]){
       case '*':
         //Updating maxSpeed
@@ -57,7 +57,7 @@ void loop() {
         break;
       case '+':
         //Updating Kp 
-        Kp = input_command/10.0;
+        Kp = input_command;
         Serial.print("+ Message: ");
         Serial.println(Kp);
         break;
