@@ -10,15 +10,13 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
-uint8_t leftSpeed = 30;
-uint8_t rightSpeed = 30;
-const int IR_SENSOR1 = A0; //sensor to left of tape
-const int IR_SENSOR2 = A1; //sensor to right of tape
-const int MAX_REFLECT = 990; //will need to double check these values
-const int MIN_REFLECT = 800;
-uint8_t maxSpeed = 50;
-const int MIDDLE = 500;
-float Kp = 0.1;
+int leftSpeed = 0;
+int rightSpeed = 0;
+const int IR_SENSOR1 = A1; //sensor to left of tape
+const int MAX_REFLECT = 670; //will need to double check these values
+const int MIN_REFLECT = 100;
+const int BUFFER = 75;
+int MAX_SPEED = 40;
 bool running = true;
 const int BUTTON = 8;
 
@@ -39,16 +37,10 @@ void loop() {
     int input_command = new_char.substring(1).toInt();
     switch(new_char[0]){
       case '*':
-        //Updating maxSpeed
-        maxSpeed = input_command;
+        //Updating MAX_SPEED
+        MAX_SPEED = input_command;
         Serial.print("* Message: ");
         Serial.println(input_command);
-        break;
-      case '+':
-        //Updating Kp 
-        Kp = input_command/10.0;
-        Serial.print("+ Message: ");
-        Serial.println(Kp);
         break;
       case ',':
         // D const = input_command;
@@ -57,7 +49,6 @@ void loop() {
         break;
     }
   }
-  uint8_t i;
 
   if (digitalRead(BUTTON)){
     running = !running;
@@ -67,18 +58,12 @@ void loop() {
     motorLeft->run(FORWARD);
     motorRight->run(BACKWARD);
     int sensor1 = analogRead(IR_SENSOR1);
-    int sensor2 = analogRead(IR_SENSOR2);
-    int THRESH = 10;
-    if (sensor1 > MIDDLE + THRESH) {
-      motorRight->setSpeed(30);
-      motorLeft->setSpeed(0);
-    } else if (sensor1 < MIDDLE - THRESH) {
-      motorLeft->setSpeed(30);
-      motorRight->setSpeed(0);
-    } else {
-      motorLeft->setSpeed(15);
-      motorRight->setSpeed(15);
-    }
+    leftSpeed = map(sensor1, MIN_REFLECT + BUFFER, MAX_REFLECT - BUFFER, 0, MAX_SPEED);
+    rightSpeed = MAX_SPEED - leftSpeed;
+    leftSpeed = limitSpeed(leftSpeed, MAX_SPEED, 0);
+    rightSpeed = limitSpeed(rightSpeed, MAX_SPEED, 0);
+    motorLeft->setSpeed(leftSpeed & 0x00FF);
+    motorRight->setSpeed(rightSpeed & 0x00FF);
   }
 }
 
