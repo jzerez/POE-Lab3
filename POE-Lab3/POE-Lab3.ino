@@ -1,22 +1,14 @@
-#include <TFT.h>
-
 /* 
-This is a test sketch for the Adafruit assembled Motor Shield for Arduino v2
-It won't work with v1.x motor shields! Only for the v2's with built in PWM
-control
-
-For use with the Adafruit Motor Shield v2 
----->	http://www.adafruit.com/products/1438
+This 
 */
-
+// Import necessary libraries
+#include <TFT.h>
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 #include <String.h>
 
 // Create the motor shield object with the default I2C address
-Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
-// Or, create it with a different I2C address (say for stacking)
-// Adafruit_MotorShield AFMS = Adafruit_MotorShield(0x61); 
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();  
 
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
@@ -25,7 +17,7 @@ const int IR_SENSOR1 = A0; //sensor to left of tape
 const int IR_SENSOR2 = A1; //sensor to right of tape
 const int MAX_REFLECT = 990; //will need to double check these values
 const int MIN_REFLECT = 800;
-const int CALIBRATION = 60;
+const int CALIBRATION = 0;
 uint8_t maxSpeed = 20;
 int leftSpeed = 20;
 int rightSpeed = 20;
@@ -92,19 +84,26 @@ void loop() {
 //    rightSpeed = (maxSpeed - leftSpeed) & 0x00FF;
     leftSpeed = limitSpeed(leftSpeed, maxSpeed, 0);
     rightSpeed = limitSpeed(rightSpeed, maxSpeed, 0);
-    Serial.print("Sensor value 1: ");
-    Serial.println(sensor1);
-    Serial.print("Sensor value 2: ");
-    Serial.println(sensor2);
-    Serial.print("Diff sensor value and deltaspeed: ");
-    Serial.print(diff);
-    Serial.print(", ");
-    Serial.println(deltaSpeed);
-    Serial.print("LEFT SPEED: ");
-    Serial.println(leftSpeed);
-    Serial.print("RIGHT SPEED: ");
+    Serial.print(sensor1);
+    Serial.print(",");
+    Serial.print(sensor2);
+    Serial.print(",");
+    Serial.print(leftSpeed);
+    Serial.print(",");
     Serial.println(rightSpeed);
-//    delay(10);
+//    Serial.print("Sensor value 1: ");
+//    Serial.println(sensor1);
+//    Serial.print("Sensor value 2: ");
+//    Serial.println(sensor2);
+//    Serial.print("Diff sensor value and deltaspeed: ");
+//    Serial.print(diff);
+//    Serial.print(", ");
+//    Serial.println(deltaSpeed);
+//    Serial.print("LEFT SPEED: ");
+//    Serial.println(leftSpeed);
+//    Serial.print("RIGHT SPEED: ");
+//    Serial.println(rightSpeed);
+//    delay(500);
     motorLeft-> setSpeed(leftSpeed & 0x00FF);
     motorRight-> setSpeed(rightSpeed & 0x00FF);
   }

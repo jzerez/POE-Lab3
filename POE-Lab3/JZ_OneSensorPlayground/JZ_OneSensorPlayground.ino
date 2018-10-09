@@ -60,12 +60,27 @@ void loop() {
     if (sensor1 > MIDDLE + THRESH) {
       motorRight->setSpeed(30);
       motorLeft->setSpeed(0);
+      Serial.print(sensor1);
+      Serial.print(",");
+      Serial.print(0);
+      Serial.print(",");
+      Serial.println(30);
     } else if (sensor1 < MIDDLE - THRESH) {
       motorLeft->setSpeed(30);
       motorRight->setSpeed(0);
+      Serial.print(sensor1);
+      Serial.print(",");
+      Serial.print(30);
+      Serial.print(",");
+      Serial.println(0);
     } else {
       motorLeft->setSpeed(15);
       motorRight->setSpeed(15);
+      Serial.print(sensor1);
+      Serial.print(",");
+      Serial.print(15);
+      Serial.print(",");
+      Serial.println(15);
     }
   }
 }
