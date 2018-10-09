@@ -13,12 +13,8 @@ Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
 uint8_t leftSpeed = 30;
 uint8_t rightSpeed = 30;
 const int IR_SENSOR1 = A0; //sensor to left of tape
-const int IR_SENSOR2 = A1; //sensor to right of tape
-const int MAX_REFLECT = 990; //will need to double check these values
-const int MIN_REFLECT = 800;
-uint8_t maxSpeed = 50;
-const int MIDDLE = 500;
-float Kp = 0.1;
+int MIDDLE = 500;
+int THRESH = 10;
 bool running = true;
 const int BUTTON = 8;
 
@@ -39,26 +35,19 @@ void loop() {
     int input_command = new_char.substring(1).toInt();
     switch(new_char[0]){
       case '*':
-        //Updating maxSpeed
-        maxSpeed = input_command;
+        //Updating MIDDLE
+        MIDDLE = input_command;
         Serial.print("* Message: ");
         Serial.println(input_command);
         break;
-      case '+':
-        //Updating Kp 
-        Kp = input_command/10.0;
-        Serial.print("+ Message: ");
-        Serial.println(Kp);
-        break;
       case ',':
-        // D const = input_command;
+        //Updating THRESH
+        THRESH = input_command;
         Serial.print(", Message: ");
         Serial.println(input_command);
         break;
     }
   }
-  uint8_t i;
-
   if (digitalRead(BUTTON)){
     running = !running;
     delay(50);
@@ -67,8 +56,7 @@ void loop() {
     motorLeft->run(FORWARD);
     motorRight->run(BACKWARD);
     int sensor1 = analogRead(IR_SENSOR1);
-    int sensor2 = analogRead(IR_SENSOR2);
-    int THRESH = 10;
+    
     if (sensor1 > MIDDLE + THRESH) {
       motorRight->setSpeed(30);
       motorLeft->setSpeed(0);
@@ -80,69 +68,4 @@ void loop() {
       motorRight->setSpeed(15);
     }
   }
-}
-
-int limitSpeed(int initialSpeed, int maxSpeed, int minSpeed) {
-  /*
-   * This function is designed to artificially limit any inputs to the motor. If the input speed is
-   * not within the specified range, the function automatically clips it such that it fits in the 
-   * range. It takes the following arguments:
-   *    initialSpeed:   Raw speed
-   *    maxSpeed:       Upper bound for acceptable speeds
-   *    minSpeed:       Lower bound for acceptable speeds
-   */
-
-  // Clip value if greater than maximum 
-  if (initialSpeed > maxSpeed){
-    return maxSpeed;
-  }
-  // Clip value if less than minimum
-  if (initialSpeed < minSpeed) {
-    return minSpeed;
-  }
-  // Return the original value if it within the range
-  return initialSpeed;
-}
-
-int calibrate(int scanSpeed, int sensor, int steps, bool findAverage, bool debugMode) {
-  /* 
-   *  This function is designed to scan the line at the beginning of the course to generate its own
-   *  threshold values for the IR sensor. It takes the following arguments:
-   *    scanSpeed:    Speed (0-255) of the motor during the scan
-   *    sensor:       Pin number of the sensor to be used in the scan
-   *    steps:        Number of points used to calculate reflectance of the ground
-   *    findAverage:  Toggle to switch between finding the average reflectance of the ground. If
-   *                  true, the function will return the average reflectance. If false, the fuction
-   *                  will return the minimum reflectance found over the scan interval
-   *    debugMode:    Toggle for print statements
-   */
-
-  // Initialize Variables
-  int lightValues = 0;
-    
-  // Move off the line
-  motorLeft->run(BACKWARD);
-  motorLeft->setSpeed(scanSpeed);
-  delay(500);
-
-  // Start the scan of the ground
-  for (int i = 0; i < steps; i++) {
-    motorLeft-> setSpeed(scanSpeed);
-    
-    if (findAverage) {
-      lightValues += (analogRead(sensor) / steps);
-    } else if (analogRead(sensor) > lightValues) {
-      lightValues = analogRead(sensor);
-    }
-    delay(20);
-  }
-  // Return to rough start position
-  motorLeft->run(FORWARD);
-  motorLeft->setSpeed(scanSpeed);
-  delay(500 + 20 * steps);
-  motorLeft->setSpeed(0);
-  
-  if (debugMode) {Serial.print("Measured Light Value is: "); Serial.println(lightValues);}
-
-  return lightValues;
 }
