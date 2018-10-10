@@ -6,7 +6,7 @@ import numpy as np
 import re  
 
 # NOTE: While this is running, you can not re-program the Arduino. You must exit 
-# this Phython program before downloading a sketch to the Arduino.
+# this Python program before downloading a sketch to the Arduino.
 
 # Set the name of the serial port
 arduinoComPort = "COM5"
@@ -15,7 +15,7 @@ arduinoComPort = "COM5"
 # NOTE: The baudRate for the sending and receiving programs must be the same!
 baudRate = 9600
 
-# Creating data arrays for distance and servo angle values
+# Creating data arrays for sensor1, sensor2, and motor speeds
 sensor1 = []
 sensor2 = []
 leftspeed = []
@@ -43,5 +43,5 @@ try:
 
 # Completed when CTRL-C pressed
 except KeyboardInterrupt:
-  # Save distance, theta, and phi data as columns in a text file
+  # Save sensor1, sensor2, leftspeed, and rightspeed data as columns in a text file
   np.savetxt('twosensor_data.txt', np.transpose([sensor1, sensor2, leftspeed, rightspeed]))

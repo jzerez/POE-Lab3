@@ -1,25 +1,23 @@
-# AnalyzeData converts the distance and servo angles into 
-# x, y, z values using spherical coordinates. Plots and saves the data as a CSV file.
+# AnalyzeData reads in the sensor values and motor speed data from an inputted txt file. It also plots the data using matplotlib. 
 
 # Importing python libraries for plotting and analysis
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 # Load txt file from SerialtoText and separate cols into separate arrays
 data = np.loadtxt('onesensor_data.txt')
 sensor1_values = data[:,0]
-leftspeeds = data[:,1]
-rightspeeds = data[:,2]
+sensor2_values = data[:,1]
+leftspeeds = data[:,2]
+rightspeeds = data[:,3]
 
+diff = sensor1_values - sensor2_values
 
-# Plotting 2d scatter of 
-plt.plot(sensor1_values)
-#plt.plot(sensor1_values)
-#plt.plot(sensor2_values)
+# Plotting difference in sensor values and motor speeds
+plt.plot(diff)
+# Motor speeds multiplied by 15 to scale with sensor values
 plt.plot(15 * leftspeeds)
 plt.plot(15 * rightspeeds)
-plt.legend(['Sensor Values','Left Motor Speeds','Right Motor Speeds'])
+plt.legend(['Difference in Sensor Values','Left Motor Speeds','Right Motor Speeds'])
 plt.grid()
-# plt.scatter(sensor1_values, sensor2_values)
 plt.show()

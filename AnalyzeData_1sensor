@@ -1,0 +1,20 @@
+# AnalyzeData_1sensor reads in the sensor value and motor speed data from an inputted txt file. It also plots the data using matplotlib. 
+
+# Importing python libraries for plotting and analysis
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load txt file from SerialtoText and separate cols into separate arrays
+data = np.loadtxt('onesensor_data.txt')
+sensor1_values = data[:,0]
+leftspeeds = data[:,1]
+rightspeeds = data[:,2]
+
+# Plotting sensor value and motor speeds
+plt.plot(sensor1_values)
+# Motor speeds multiplied by 15 to scale with sensor values
+plt.plot(15 * leftspeeds) 
+plt.plot(15 * rightspeeds)
+plt.legend(['Sensor Values','Left Motor Speeds','Right Motor Speeds'])
+plt.grid()
+plt.show()

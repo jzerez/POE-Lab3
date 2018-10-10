@@ -1,4 +1,4 @@
-# SerialtoText reads in the serial lines via the serial port and saves the values (as integers) into a txt file
+# SerialtoText_1sensor reads in the serial lines via the serial port and saves the values (as integers) into a txt file
 
 # Import libraries to connect python script with arduino serial monitor
 import serial
@@ -15,7 +15,7 @@ arduinoComPort = "COM5"
 # NOTE: The baudRate for the sending and receiving programs must be the same!
 baudRate = 9600
 
-# Creating data arrays for distance and servo angle values
+# Creating data arrays for sensor1 and motor speeds
 sensor1 = []
 leftspeed = []
 rightspeed = []
@@ -41,5 +41,5 @@ try:
 
 # Completed when CTRL-C pressed
 except KeyboardInterrupt:
-  # Save distance, theta, and phi data as columns in a text file
+  # Save sensor1, leftspeed, and rightspeed data as columns in a text file
   np.savetxt('onesensor_data.txt', np.transpose([sensor1, leftspeed, rightspeed]))
