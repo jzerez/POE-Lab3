@@ -12,21 +12,29 @@ Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
 int leftSpeed = 0;
 int rightSpeed = 0;
-const int IR_SENSOR1 = A0; //sensor to left of tape
-const int MAX_REFLECT = 670; //will need to double check these values
-const int MIN_REFLECT = 100;
-const int BUFFER = 75;
+const int IR_SENSOR1 = A0;
+const int IR_SENSOR2 = A1;//sensor to left of tape
+const int MAX_REFLECT = 420; //will need to double check these values
+const int MIN_REFLECT = 40;
+const int BUFFER = 40;
+const int MAX_REFLECT_FAR = 830;
+const int MIN_REFLECT_FAR = 220;
 int MAX_SPEED = 40;
+float SPEED_INCREASE_FACTOR = 1.15;
+float FIT_POWER = 0.8;
 bool running = true;
 const int BUTTON = 8;
+bool debug = false;
+
+float FIT_CONST = MAX_SPEED/pow((MAX_REFLECT - MIN_REFLECT), FIT_POWER);
 
 // You can also make another motor on port M2
 //Adafruit_DCMotor *myOtherMotor = AFMS.getMotor(2);
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
-  Serial.println("Adafruit Motorshield v2 - DC Motor test!");
-
+  Serial.println();
+  Serial.println(FIT_CONST);
   AFMS.begin();  // create with the default frequency 1.6KHz
   //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
 }
@@ -34,18 +42,27 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
     String new_char = Serial.readString();
-    int input_command = new_char.substring(1).toInt();
+    int input_command = new_char.substring(1).toFloat();
     switch (new_char[0]) {
       case '*':
         //Updating MAX_SPEED
-        MAX_SPEED = input_command;
+        MAX_SPEED = int(input_command);
+        FIT_CONST = MAX_SPEED/pow((MAX_REFLECT - MIN_REFLECT), FIT_POWER);
         Serial.print("* Message: ");
         Serial.println(input_command);
         break;
       case ',':
-        // D const = input_command;
+        // Updating SPEED_INCREASE_FACTOR
+        SPEED_INCREASE_FACTOR = input_command;
         Serial.print(", Message: ");
         Serial.println(input_command);
+        break;
+      case 'd':
+        debug = !debug;
+        break;
+      case 'f':
+        FIT_POWER = input_command;
+        FIT_CONST = MAX_SPEED/pow((MAX_REFLECT - MIN_REFLECT), FIT_POWER);
         break;
     }
   }
@@ -58,12 +75,26 @@ void loop() {
     motorLeft->run(FORWARD);
     motorRight->run(BACKWARD);
     int sensor1 = analogRead(IR_SENSOR1);
-    rightSpeed = map(sensor1, MIN_REFLECT - BUFFER, MAX_REFLECT + BUFFER, 0, MAX_SPEED);
-    leftSpeed = MAX_SPEED - rightSpeed;
-    leftSpeed = limitSpeed(leftSpeed, MAX_SPEED, 0);
-    rightSpeed = limitSpeed(rightSpeed, MAX_SPEED, 0);
+    int sensor2 = analogRead(IR_SENSOR2);
+    float scalingFactor = (1 + float(sensor2 - MIN_REFLECT_FAR) / float(MAX_REFLECT_FAR - MIN_REFLECT_FAR))*SPEED_INCREASE_FACTOR;
+    rightSpeed = calcPower(sensor1, scalingFactor);
+    leftSpeed = calcPower(MAX_REFLECT-sensor1+MIN_REFLECT, scalingFactor);
+
+    leftSpeed = limitSpeed(leftSpeed, scalingFactor * MAX_SPEED, 0);
+    rightSpeed = limitSpeed(rightSpeed, scalingFactor * MAX_SPEED, 0);
     motorLeft->setSpeed(leftSpeed & 0x00FF);
     motorRight->setSpeed(rightSpeed & 0x00FF);
+
+    if (debug) {
+      Serial.print("RIGHT SPEED: ");
+      Serial.println(rightSpeed);
+      Serial.print("LEFT SPEED: ");
+      Serial.println(leftSpeed);
+      Serial.print("SPEED FACTOR: ");
+      Serial.println(scalingFactor);
+      Serial.println(FIT_POWER);
+      delay(500);
+    }
   }
 }
 
@@ -89,48 +120,6 @@ int limitSpeed(int initialSpeed, int maxSpeed, int minSpeed) {
   return initialSpeed;
 }
 
-int calibrate(int scanSpeed, int sensor, int steps, bool findAverage, bool debugMode) {
-  /*
-      This function is designed to scan the line at the beginning of the course to generate its own
-      threshold values for the IR sensor. It takes the following arguments:
-        scanSpeed:    Speed (0-255) of the motor during the scan
-        sensor:       Pin number of the sensor to be used in the scan
-        steps:        Number of points used to calculate reflectance of the ground
-        findAverage:  Toggle to switch between finding the average reflectance of the ground. If
-                      true, the function will return the average reflectance. If false, the fuction
-                      will return the minimum reflectance found over the scan interval
-        debugMode:    Toggle for print statements
-  */
-
-  // Initialize Variables
-  int lightValues = 0;
-
-  // Move off the line
-  motorLeft->run(BACKWARD);
-  motorLeft->setSpeed(scanSpeed);
-  delay(500);
-
-  // Start the scan of the ground
-  for (int i = 0; i < steps; i++) {
-    motorLeft-> setSpeed(scanSpeed);
-
-    if (findAverage) {
-      lightValues += (analogRead(sensor) / steps);
-    } else if (analogRead(sensor) > lightValues) {
-      lightValues = analogRead(sensor);
-    }
-    delay(20);
-  }
-  // Return to rough start position
-  motorLeft->run(FORWARD);
-  motorLeft->setSpeed(scanSpeed);
-  delay(500 + 20 * steps);
-  motorLeft->setSpeed(0);
-
-  if (debugMode) {
-    Serial.print("Measured Light Value is: ");
-    Serial.println(lightValues);
-  }
-
-  return lightValues;
+int calcPower(int reading, float scalingFactor) {
+  return abs(scalingFactor * FIT_CONST * pow((reading - MIN_REFLECT), FIT_POWER));
 }
